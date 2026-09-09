@@ -8,6 +8,7 @@ import Logo from '../assets/logo.png';
 import Home from '../assets/home.png';
 import star from '../assets/star.png';
 import PlannedIcon from '../assets/plan.png';
+import Plan from '../assets/planned.png';
 import Space from '../assets/space.png';
 import Plus from '../assets/plus.png';
 import Celebrate from '../assets/celebration.png';
@@ -15,6 +16,13 @@ import Calendar from '../assets/calendar.png';
 import Search from '../assets/search.png';
 import Document from '../assets/documentation.png';
 
+const SPACE_ICON_SYMBOLS = {
+    folder: "📁",
+    briefcase: "💼",
+    book: "▤",
+    code: "<>",
+    palette: "🎨",
+};
 
 function Planned() {
     const navigate = useNavigate();
@@ -26,6 +34,11 @@ function Planned() {
 
 
     }, []);
+
+    const handleTaskClick = () => {
+        navigate('/tasks');
+    }
+
     const handlePlanClick = () => {
         navigate('/planned');
     };
@@ -63,6 +76,15 @@ function Planned() {
                 ]
             }
         ]);
+
+        try {
+            const savedSpaces = JSON.parse(localStorage.getItem("todo-list:spaces") || "[]");
+            if (Array.isArray(savedSpaces) && savedSpaces.length > 0) {
+                setUserSpaces((spaces) => [...spaces, ...savedSpaces]);
+            }
+        } catch {
+            setUserSpaces((spaces) => spaces);
+        }
     }, []);
 
     {/*Render space list*/ }
@@ -70,7 +92,9 @@ function Planned() {
         return userSpaces.map((space, index) => (
             <div key={index} className="space-card">
                 <div className="space-icon" aria-hidden="true">
-                    {space.icon ? <img src={space.icon} alt="" /> : <span className="folder-icon" />}
+                    {space.icon
+                        ? <span className="space-symbol" aria-label={space.icon}>{SPACE_ICON_SYMBOLS[space.icon] || "📁"}</span>
+                        : <span className="folder-icon" />}
                 </div>
                 <div className="space-details">
                     <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px", fontWeight: "bold" }}>{space.name}</Typography>
@@ -83,8 +107,9 @@ function Planned() {
     {/*Render Space list* panel*/ }
     function renderSpacePanel() {
         return userSpaces.map((space) => {
-            const taskCount = space.tasks.length;
-            const completedTaskCount = space.tasks.filter((task) =>
+            const tasks = Array.isArray(space.tasks) ? space.tasks : [];
+            const taskCount = tasks.length;
+            const completedTaskCount = tasks.filter((task) =>
                 task.completed === true
             ).length;
             const completionPercent = taskCount === 0
@@ -94,7 +119,9 @@ function Planned() {
             return (
             <div key={space.name} className="space-item-card">
                 <div className="space-icon" aria-hidden="true">
-                    {space.icon ? <img src={space.icon} alt="" /> : <span className="folder-icon" />}
+                    {space.icon
+                        ? <span className="space-symbol" aria-label={space.icon}>{SPACE_ICON_SYMBOLS[space.icon] || "📁"}</span>
+                        : <span className="folder-icon" />}
                 </div>
                 <div className="space-details">
                     <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px", fontWeight: "bold" }}>{space.name}</Typography>
@@ -138,7 +165,7 @@ function Planned() {
                 </div>
 
                 {/*Các nút bấm*/}
-                <div className="sidebar-buttons">
+                <div className="sidebar-buttons" onClick={handleTaskClick}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={Home} alt="" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Tasks</Typography>
@@ -149,7 +176,7 @@ function Planned() {
                 </div>
                 <div className="sidebar-buttons" onClick={handlePlanClick}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                            <img src={PlannedIcon} alt="" />
+                            <img src={Plan} alt="" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Planned</Typography>
                         <button className="sidebar-button-icon" type="button" onClick={() => navigate('/add-task', { state: { returnTo: '/planned', title: 'Add planned task' } })} aria-label="Add planned task">
                             <img src={Plus} alt="Plus" />
@@ -169,7 +196,7 @@ function Planned() {
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={Space} alt="Space" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Spaces</Typography>
-                        <button className="sidebar-button-icon" type="button" onClick={() => navigate('/add-task', { state: { returnTo: '/spaces', title: 'Add task to a space' } })} aria-label="Add task to a space">
+                        <button className="sidebar-button-icon" type="button" onClick={() => navigate('/add-space', { state: { returnTo: '/spaces', title: 'Add task to a space' } })} aria-label="Add task to a space">
                             <img src={Plus} alt="Plus" />
                         </button>
                     </div>

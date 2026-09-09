@@ -15,6 +15,8 @@ import PlanImage from '../assets/plan.png';
 import Calendar from '../assets/calendar.png';
 import Search from '../assets/search.png';
 import ThreeDots from '../assets/three-dots 3.png';
+import Crisis from '../assets/crisis.png';
+import Rocket from '../assets/rocket.png';
 
 function Planned() {
     const navigate = useNavigate();
@@ -127,27 +129,31 @@ function Planned() {
         );
     }
 
-    function renderPlanned() {
+    function getFilteredTasks() {
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const startOfTomorrow = new Date(startOfToday);
         startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
 
-        const filteredTasks = userTasks
+        return userTasks
             .map((task, originalIndex) => ({ task, originalIndex }))
             .filter(({ task }) => {
-            const deadline = new Date(task.deadline__time);
+                const deadline = new Date(task.deadline__time);
 
-            if (activeFilter === 'today') {
-                return deadline >= startOfToday && deadline < startOfTomorrow;
-            }
+                if (activeFilter === 'today') {
+                    return deadline >= startOfToday && deadline < startOfTomorrow;
+                }
 
-            if (activeFilter === 'overdue') {
-                return deadline < startOfToday;
-            }
+                if (activeFilter === 'overdue') {
+                    return deadline < startOfToday;
+                }
 
-            return deadline >= startOfTomorrow;
-        });
+                return deadline >= startOfTomorrow;
+            });
+    }
+
+    function renderPlanned() {
+        const filteredTasks = getFilteredTasks();
 
         if (filteredTasks.length === 0) {
             return <p className="empty-filter-message">No planned tasks in this filter.</p>;
@@ -191,6 +197,40 @@ function Planned() {
                 </div>
             </div>
         ));
+    }
+
+    function renderStatsPanel() {
+        const filteredTaskCount = getFilteredTasks().length;
+        const statsByFilter = {
+            today: {
+                icon: Celebrate,
+                title: `You have finished ${countCompletedPlanned()}/${userTasks.length} Plan`,
+                subtitle: "Finish your deadlines today",
+            },
+            overdue: {
+                icon: Crisis,
+                title: `You got ${filteredTaskCount} Overdue tasks`,
+                subtitle: "Handle them or reschedule the deadline",
+            },
+            future: {
+                icon: Rocket,
+                title: `You have ${filteredTaskCount} upcoming tasks`,
+                subtitle: "Plan ahead and stay on track",
+            },
+        };
+
+        const stats = statsByFilter[activeFilter];
+
+        return (
+            <div className={`static-panel stats-panel-${activeFilter}`}>
+                <img src={stats.icon} alt="" className="planned-panel-left-image" />
+                <div className="static-panel-content">
+                    <h1 className="static-panel-header">{stats.title}</h1>
+                    <p className="static-panel-subtitle">{stats.subtitle}</p>
+                </div>
+                <img src={PlanImage} alt="" className="static-panel-image" />
+            </div>
+        );
     }
 
     function countCompletedPlanned() {
@@ -338,14 +378,7 @@ function Planned() {
                     <FilterTabs />
                 </div>
 
-                <div className="static-panel">
-                    <img src={Celebrate} alt="Celebrate" className="planned-panel-left-image" />
-                    <div className="static-panel-content">
-                        <h1 className="static-panel-header">You have finished {countCompletedPlanned()}/{userTasks.length} Plan</h1>
-                        <p className="static-panel-subtitle">Finish your deadlines today</p>
-                    </div>
-                    <img src={PlanImage} alt="Plan" className="static-panel-image" />
-                </div>
+                {renderStatsPanel()}
                 <div className="planned-panel">
                     <div className="planned-tasks-list">
                         {renderPlanned()}
