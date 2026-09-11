@@ -9,6 +9,7 @@ import Planned from "../assets/planned.png";
 import Space from "../assets/space.png";
 import Plus from "../assets/plus.png";
 import Search from "../assets/search.png";
+import SpaceList from "./SpaceList";
 
 function AddNewTask() {
     const navigate = useNavigate();
@@ -28,9 +29,9 @@ function AddNewTask() {
                 icon: "",
                 description: "Focus on your academic goals",
                 tasks: [
-                    { id: 1, title: "Read Chapter 1", completed: true },
-                    { id: 2, title: "Complete Assignment 1", completed: false },
-                    { id: 3, title: "Prepare for Quiz", completed: false }
+                    { id: 1, title: "Read Chapter 1", completed: true, dueDate: "2023-07-05" },
+                    { id: 2, title: "Complete Assignment 1", completed: false, dueDate: "2023-07-10" },
+                    { id: 3, title: "Prepare for Quiz", completed: false, dueDate: "2023-07-12" }
                 ]
             },
             {
@@ -38,9 +39,9 @@ function AddNewTask() {
                 icon: "",
                 description: "Focus on your career goals",
                 tasks: [
-                    { id: 1, title: "Finish Project Report", completed: false },
-                    { id: 2, title: "Attend Team Meeting", completed: true },
-                    { id: 3, title: "Submit Timesheet", completed: false }
+                    { id: 1, title: "Finish Project Report", completed: false, dueDate: "2023-07-15" },
+                    { id: 2, title: "Attend Team Meeting", completed: true , dueDate: "2023-07-10" },
+                    { id: 3, title: "Submit Timesheet", completed: false , dueDate: "2023-07-20" }
                 ]
             },
             {
@@ -48,9 +49,9 @@ function AddNewTask() {
                 icon: "",
                 description: "Focus on your event goals",
                 tasks: [
-                    { id: 1, title: "Plan Birthday Party", completed: false },
-                    { id: 2, title: "Send Invitations", completed: true },
-                    { id: 3, title: "Prepare Gifts", completed: false }
+                    { id: 1, title: "Plan Birthday Party", completed: false, dueDate: "2023-08-01" },
+                    { id: 2, title: "Send Invitations", completed: true, dueDate: "2023-07-25" },
+                    { id: 3, title: "Prepare Gifts", completed: false, dueDate: "2023-07-30" }
                 ]
             }
         ]);
@@ -142,7 +143,7 @@ function AddNewTask() {
                 <div className="space-list">
                     <Typography className="space-header">My Space</Typography>
                     {/*Render space list*/}
-                    {renderSpaceList()}
+                    <SpaceList />
                 </div>
 
                 {/*Tên tác giả */}
@@ -150,34 +151,42 @@ function AddNewTask() {
 
             </aside>
 
-            <main className="add-task-page">
+            <main className="main-content">
+
+                <div className="search-bar">
+                    <input type="text" placeholder="Search your work ..." className="search-input" />
+                    <button className="search-button">
+                        <img src={Search} alt="Search" style={{ width: "18px", height: "18px" }} />
+                    </button>
+                </div>
+
                 <section className="add-task-panel" aria-label={title}>
-            <form className="add-task-form" onSubmit={handleSubmit}>
-                <div className="add-task-form-header">
-                    <h2>{title}</h2>
-                    <button type="button" className="modal-close-button" onClick={() => navigate(returnTo)} aria-label="Close form">&times;</button>
-                </div>
-                <label htmlFor="task-name">Task name</label>
-                <input id="task-name" type="text" value={name} onChange={(event) => setName(event.target.value)} required autoFocus />
-                <label htmlFor="task-description">Description</label>
-                <textarea id="task-description" value={description} onChange={(event) => setDescription(event.target.value)} rows="3" />
-                <label htmlFor="task-due-date">Due date</label>
-                <input id="task-due-date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
-                <label htmlFor="task-status">Status</label>
-                <select id="task-status" value={status} onChange={(event) => setStatus(event.target.value)}>
-                    <option value="To do">To do</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Done">Done</option>
-                </select>
-                <label className="task-important-field">
-                    <input type="checkbox" checked={important} onChange={(event) => setImportant(event.target.checked)} />
-                    Important
-                </label>
-                <div className="add-task-form-actions">
-                    <button type="button" className="modal-cancel-button" onClick={() => navigate(returnTo)}>Cancel</button>
-                    <button type="submit" className="modal-submit-button">Add task</button>
-                </div>
-            </form>
+                    <form className="add-task-form" onSubmit={handleSubmit}>
+                        <div className="add-task-form-header">
+                            <h2>{title}</h2>
+                            <button type="button" className="modal-close-button" onClick={() => navigate(returnTo)} aria-label="Close form">&times;</button>
+                        </div>
+                        <label htmlFor="task-name">Task name</label>
+                        <input id="task-name" type="text" value={name} onChange={(event) => setName(event.target.value)} required autoFocus />
+                        <label htmlFor="task-description">Description</label>
+                        <textarea id="task-description" value={description} onChange={(event) => setDescription(event.target.value)} rows="3" />
+                        <label htmlFor="task-due-date">Due date</label>
+                        <input id="task-due-date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+                        <label htmlFor="task-status">Status</label>
+                        <select id="task-status" value={status} onChange={(event) => setStatus(event.target.value)}>
+                            <option value="To do">To do</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Done">Done</option>
+                        </select>
+                        <label className="task-important-field">
+                            <input type="checkbox" checked={important} onChange={(event) => setImportant(event.target.checked)} />
+                            Important
+                        </label>
+                        <div className="add-task-form-actions">
+                            <button type="button" className="modal-cancel-button" onClick={() => navigate(returnTo)}>Cancel</button>
+                            <button type="submit" className="modal-submit-button">Add task</button>
+                        </div>
+                    </form>
                 </section>
             </main>
         </>

@@ -14,6 +14,7 @@ import Celebrate from '../assets/celebration.png';
 import Calendar from '../assets/calendar.png';
 import Search from '../assets/search.png';
 import ThreeDots from '../assets/three-dots 3.png';
+import SpaceList from "./SpaceList";
 
 function Tasks() {
     const [userTasks, setUserTasks] = useState([]);
@@ -358,7 +359,7 @@ function Tasks() {
                 <div className="space-list">
                     <Typography className="space-header">My Space</Typography>
                     {/*Render space list*/}
-                    {renderSpaceList()}
+                    <SpaceList />
                 </div>
 
                 {/*Tên tác giả */}

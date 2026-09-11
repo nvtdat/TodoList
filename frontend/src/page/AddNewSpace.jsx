@@ -9,6 +9,7 @@ import Planned from "../assets/planned.png";
 import Space from "../assets/space.png";
 import Plus from "../assets/plus.png";
 import Search from "../assets/search.png";
+import SpaceList from "./SpaceList";
 
 const SPACE_COLORS = [
     { value: "cyan", hex: "#06B6D4", label: "Cyan" },
@@ -176,7 +177,7 @@ function AddNewSpace() {
                     <div className="space-list">
                         <Typography className="space-header">My Space</Typography>
                         {/*Render space list*/}
-                        {renderSpaceList()}
+                        <SpaceList />
                     </div>
     
                     {/*Tên tác giả */}

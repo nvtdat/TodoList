@@ -15,6 +15,8 @@ import Celebrate from '../assets/celebration.png';
 import Calendar from '../assets/calendar.png';
 import Search from '../assets/search.png';
 import Document from '../assets/documentation.png';
+import SpaceList from "./SpaceList";
+import WhitePlus from "../assets/white-plus.png";
 
 const SPACE_ICON_SYMBOLS = {
     folder: "📁",
@@ -137,10 +139,10 @@ function Planned() {
                 <button
                     type="button"
                     className="view-tasks-button"
-                    onClick={() => navigate(`/tasks?space=${encodeURIComponent(space.name)}`)}
+                    onClick={() => navigate(`/space?space=${encodeURIComponent(space.name)}`)}
                     aria-label={`View tasks in ${space.name}`}
                 >
-                    <Typography variant="body1" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "12px" }}>View</Typography>
+                    <Typography className="view-tasks-label" variant="body1" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "12px", fontWeight: 600 }}>View</Typography>
                 </button>
             </div>
             );
@@ -207,7 +209,7 @@ function Planned() {
                 <div className="space-list">
                     <Typography className="space-header">My Space</Typography>
                     {/*Render space list*/}
-                    {renderSpaceList()}
+                    <SpaceList />
                 </div>
 
                 {/*Tên tác giả */}
@@ -229,6 +231,14 @@ function Planned() {
                         <p sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px" }}>Manage your tasks and projects in one place</p>
                     </div>
                     <img src={PlannedIcon} alt="Planned" style={{width: "80px", height: "80px", marginRight: "20px" }} />
+                </div>
+
+                {/*Nút Tạo không gian mới*/}
+                <div className="create-space-button-container">
+                    <button type="button" className="create-space-button" onClick={() => navigate('/add-space', { state: { returnTo: '/spaces', title: 'Add new space' } })}>
+                        <img src={WhitePlus} alt="" />
+                        <Typography variant="body1">New</Typography>
+                    </button>
                 </div>
 
                 <div className="space-panel-grid">

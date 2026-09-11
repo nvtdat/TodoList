@@ -15,6 +15,7 @@ import PlannedImage from '../assets/planned.png';
 import Calendar from '../assets/calendar.png';
 import Search from '../assets/search.png';
 import ThreeDots from '../assets/three-dots 3.png';
+import SpaceList from "./SpaceList";
 
 function Important() {
     const navigate = useNavigate();
@@ -282,7 +283,7 @@ function Important() {
                 <div className="space-list">
                     <Typography className="space-header">My Space</Typography>
                     {/*Render space list*/}
-                    {renderSpaceList()}
+                    <SpaceList />
                 </div>
 
                 {/*Tên tác giả */}
