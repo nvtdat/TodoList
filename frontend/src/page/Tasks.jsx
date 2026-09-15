@@ -362,6 +362,11 @@ function Tasks() {
                     <SpaceList />
                 </div>
 
+                {/*Nút log out*/}
+                <button className="logout-button" type="button" onClick={() => navigate('/')}>
+                    <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#EF4444", fontWeight: "bold" }}>Log out</Typography>
+                </button>
+                
                 {/*Tên tác giả */}
                 <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#1D4ED8", fontStyle: "italic", display: "flex", marginTop: "auto" }}>@Made by Dante<br />Nguyen Van Tien Dat</Typography>
             </aside>

@@ -1516,3 +1516,49 @@
     border-width: 0 3px 3px 0;
     transform: translate(-50%, -60%) rotate(45deg);
 }
+
+.logout-button {
+    min-width: 80px;
+    height: 40px;
+    background: transparent !important;
+    color: #EF4444 !important;
+    border-radius: 14px !important;
+    text-transform: none !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    border: 1px solid transparent;
+    padding: 0px 14px;
+    letter-spacing: 0.1px;
+}
+
+.logout-button:hover {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(220, 38, 38, 0.2);
+}
+
+.logout-button:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+    transition: all 0.1s ease;
+}
+
+.logout-button svg,
+.logout-button img {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.25s ease;
+}
+
+.logout-button:hover svg,
+.logout-button:hover img {
+    transform: translateX(2px);
+}
