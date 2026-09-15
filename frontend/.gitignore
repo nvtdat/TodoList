@@ -32,3 +32,6 @@ env/
 # Environment variables
 .env
 *.env
+
+_pycache__/
+.vscode/
