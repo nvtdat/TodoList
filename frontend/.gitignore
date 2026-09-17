@@ -33,5 +33,4 @@ env/
 .env
 *.env
 
-_pycache__/
-.vscode/
+__pycache__/
