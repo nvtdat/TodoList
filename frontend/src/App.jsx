@@ -10,6 +10,7 @@ import AddNewTask from './page/AddNewTask';
 import AddNewSpace from './page/AddNewSpace';
 import SpaceView from './page/SpaceView';
 import VerifyEmail from './page/VerifyEmail';
+import EditTask from './page/EditTask';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/spaces" element={<Space />} />
         <Route path="/space" element={<SpaceView />} />
         <Route path="/add-task" element={<AddNewTask />} />
+        <Route path="/edit-task" element={<EditTask />} />
         <Route path="/add-space" element={<AddNewSpace />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
 

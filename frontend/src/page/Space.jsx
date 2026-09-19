@@ -34,6 +34,7 @@ function Space() {
     const [userTasks, setUserTasks] = useState([]);
     const [userSpaces, setUserSpaces] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeButton, setActiveButton] = useState('spaces');
 
     const handleTaskClick = () => {
         navigate('/tasks');
@@ -41,6 +42,10 @@ function Space() {
 
     const handlePlanClick = () => {
         navigate('/planned');
+    };
+
+    const handleImportantClick = () => {
+        navigate('/important');
     };
 
     useEffect(() => {
@@ -170,7 +175,7 @@ function Space() {
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={Home} alt="" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Tasks</Typography>
-                        <button className="sidebar-button-icon" type="button" onClick={() => navigate('/add-task', { state: { returnTo: '/tasks', title: 'Add task' } })} aria-label="Add task">
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate('/add-task', { state: { returnTo: '/tasks', title: 'Add task' } }); }} aria-label="Add task">
                             <img src={Plus} alt="Plus" />
                         </button>
                     </div>
@@ -179,25 +184,28 @@ function Space() {
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={Plan} alt="" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Planned</Typography>
-                        <button className="sidebar-button-icon" type="button" onClick={() => navigate('/add-task', { state: { returnTo: '/planned', title: 'Add planned task' } })} aria-label="Add planned task">
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate('/add-task', { state: { returnTo: '/planned', title: 'Add planned task' } }); }} aria-label="Add planned task">
                             <img src={Plus} alt="Plus" />
                         </button>
                     </div>
                 </div>
-                <div className="sidebar-buttons">
+                <div className="sidebar-buttons" onClick={handleImportantClick}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={star} alt="" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Important</Typography>
-                        <button className="sidebar-button-icon" type="button" onClick={() => navigate('/add-task', { state: { returnTo: '/important', title: 'Add important task', defaultImportant: true } })} aria-label="Add important task">
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate('/add-task', { state: { returnTo: '/important', title: 'Add important task', defaultImportant: true } }); }} aria-label="Add important task">
                             <img src={Plus} alt="Plus" />
                         </button>
                     </div>
                 </div>
-                <div className="sidebar-buttons">
+                <div
+                    className={`sidebar-buttons ${activeButton === 'spaces' ? 'active' : ''}`}
+                    onClick={() => setActiveButton('spaces')}
+                >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={SpaceIcon} alt="Space" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Spaces</Typography>
-                        <button className="sidebar-button-icon" type="button" onClick={() => navigate('/add-space', { state: { returnTo: '/spaces', title: 'Add new space' } })} aria-label="Add space">
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate('/add-space', { state: { returnTo: '/spaces', title: 'Add new space' } }); }} aria-label="Add space">
                             <img src={Plus} alt="Plus" />
                         </button>
                     </div>

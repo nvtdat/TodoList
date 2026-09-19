@@ -28,6 +28,7 @@ function Planned() {
     const [userSpaces, setUserSpaces] = useState([]);
     const [activeFilter, setActiveFilter] = useState('today');
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeButton, setActiveButton] = useState('planned');
 
     /*Handle click on Planned button*/
     const handlePlanClick = () => {
@@ -326,7 +327,10 @@ function Planned() {
                         </button>
                     </div>
                 </div>
-                <div className="sidebar-buttons" onClick={handlePlanClick}>
+                <div 
+                    className={`sidebar-buttons ${activeButton === 'planned' ? 'active' : ''}`} 
+                    onClick={() => setActiveButton('planned')}
+                    >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={PlannedIcon} alt="" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Planned</Typography>

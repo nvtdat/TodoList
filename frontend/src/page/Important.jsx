@@ -26,15 +26,11 @@ function Important() {
     const [userSpaces, setUserSpaces] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeButton, setActiveButton] = useState('important');
 
     const handlePlanClick = () => {
         navigate('/planned');
     };
-
-    const handleImportantClick = () => {
-        navigate('/important');
-    };
-
 
     const handleSpacesClick = () => {
         navigate('/spaces');
@@ -271,7 +267,10 @@ function Important() {
                         </button>
                     </div>
                 </div>
-                <div className="sidebar-buttons" onClick={handleImportantClick}>
+                <div
+                    className={`sidebar-buttons ${activeButton === 'important' ? 'active' : ''}`}
+                    onClick={() => setActiveButton('important')}
+                >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={star} alt="" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Important</Typography>

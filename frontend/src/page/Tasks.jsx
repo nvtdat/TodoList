@@ -24,6 +24,8 @@ function Tasks() {
     const [userSpaces, setUserSpaces] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+
+    const [activeButton, setActiveButton] = useState('tasks');
     const navigate = useNavigate();
     const handlePlanClick = () => {
         // Navigate to the Planned page
@@ -36,6 +38,11 @@ function Tasks() {
 
     const handleSpacesClick = () => {
         navigate('/spaces');
+    }
+
+    //Edit task function
+    const editTask = (task) => {
+        navigate('/edit-task', { state: { task, returnTo: '/tasks', title: 'Edit task' } });
     }
 
     const toggleCompleted = async (task) => {
@@ -237,7 +244,7 @@ function Tasks() {
                     </button>
                     {openTaskMenu === task.id && (
                         <div className="task-actions-menu">
-                            <button type="button" onClick={() => setOpenTaskMenu(null)}>Edit task</button>
+                            <button type="button" onClick={() => editTask(task)}>Edit task</button>
                             <button className="delete-action" type="button" onClick={async () => {
                                 try {
                                     await deleteTask(task.id);
@@ -326,7 +333,10 @@ function Tasks() {
                 </div>
 
                 {/*Các nút bấm*/}
-                <div className="sidebar-buttons">
+                <div
+                    className={`sidebar-buttons ${activeButton === 'tasks' ? 'active' : ''}`}
+                    onClick={() => setActiveButton('tasks')}
+                >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={Home} alt="" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Tasks</Typography>

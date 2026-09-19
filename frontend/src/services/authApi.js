@@ -102,10 +102,10 @@ export function createTask(title, description, options = {}) {
     });
 }
 
-export function updateTask(taskId, task) {
+export function updateTask(taskId, title, description, options = {}) {
     return request(`/task/${taskId}`, {
         method: "PUT",
-        body: JSON.stringify(task),
+        body: JSON.stringify({ title, description, ...options }),
     });
 }
 

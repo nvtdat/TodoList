@@ -1,0 +1,223 @@
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Typography } from "@mui/material";
+import "./web.css";
+import Logo from "../assets/logo.png";
+import Home from "../assets/home.png";
+import Star from "../assets/star.png";
+import Planned from "../assets/planned.png";
+import Space from "../assets/space.png";
+import Plus from "../assets/plus.png";
+import Search from "../assets/search.png";
+import SpaceList from "./SpaceList";
+import { updateTask } from "../services/authApi";
+import toast from "react-hot-toast";
+
+function EditTask() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { returnTo = "/tasks", defaultImportant = false, title = "Add new task" } = location.state || {};
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [dueDate, setDueDate] = useState("");
+    const [status, setStatus] = useState("To do");
+    const [important, setImportant] = useState(defaultImportant);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [userSpaces, setUserSpaces] = useState([]);
+    useEffect(() => {
+        setUserSpaces([
+            {
+                name: "Study Plan",
+                icon: "",
+                description: "Focus on your academic goals",
+                tasks: [
+                    { id: 1, title: "Read Chapter 1", completed: true, dueDate: "2023-07-05" },
+                    { id: 2, title: "Complete Assignment 1", completed: false, dueDate: "2023-07-10" },
+                    { id: 3, title: "Prepare for Quiz", completed: false, dueDate: "2023-07-12" }
+                ]
+            },
+            {
+                name: "Work Progress",
+                icon: "",
+                description: "Focus on your career goals",
+                tasks: [
+                    { id: 1, title: "Finish Project Report", completed: false, dueDate: "2023-07-15" },
+                    { id: 2, title: "Attend Team Meeting", completed: true , dueDate: "2023-07-10" },
+                    { id: 3, title: "Submit Timesheet", completed: false , dueDate: "2023-07-20" }
+                ]
+            },
+            {
+                name: "Event Plan",
+                icon: "",
+                description: "Focus on your event goals",
+                tasks: [
+                    { id: 1, title: "Plan Birthday Party", completed: false, dueDate: "2023-08-01" },
+                    { id: 2, title: "Send Invitations", completed: true, dueDate: "2023-07-25" },
+                    { id: 3, title: "Prepare Gifts", completed: false, dueDate: "2023-07-30" }
+                ]
+            }
+        ]);
+    }, []);
+
+
+    const openAddTask = (target, targetTitle, targetImportant = false) => {
+        navigate("/add-task", {
+            state: { returnTo: target, title: targetTitle, defaultImportant: targetImportant },
+        });
+    };
+
+    {/*Load dữ liệu task từ backend*/ }
+    useEffect(() => {
+        if (location.state && location.state.task) {
+            const task = location.state.task;
+            setName(task.title || "");
+            setDescription(task.description || "");
+            setDueDate(task.due_date ? task.due_date.split("T")[0] : "");
+            setStatus(task.is_completed ? "Done" : "To do");
+            setImportant(task.is_important || false);
+        }
+    }, [location.state]);
+
+    async function handleUpdateTask(event) {
+        event.preventDefault();
+        setIsSubmitting(true);
+        try {
+            const task = location.state.task;
+            await updateTask(task.id, name.trim(), description.trim(), {
+                due_date: dueDate ? `${dueDate}T00:00:00` : null,
+                is_completed: status === "Done",
+                is_important: important,
+            });
+            navigate(returnTo);
+        } catch (error) {
+            toast.error(error.message);
+        }
+        finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    {/*Render space list*/ }
+    function renderSpaceList() {
+        return userSpaces.map((space, index) => (
+            <div key={index} className="space-card">
+                <div className="space-icon" aria-hidden="true">
+                    {space.icon ? <img src={space.icon} alt="" /> : <span className="folder-icon" />}
+                </div>
+                <div className="space-details">
+                    <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px", fontWeight: "bold" }}>{space.name}</Typography>
+                    <Typography variant="body1" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "12px" }}>{space.description}</Typography>
+                </div>
+            </div>
+        ));
+    }
+
+    return (
+        <>
+            <aside className="sidebar">
+                <div className="sidebar-logo">
+                    <img src={Logo} alt="Todo list" style={{ scale: 0.5 }} />
+                </div>
+                <div className="sidebar-content">
+                    <div className="sidebar-search">
+                        <input type="text" placeholder="Search..." className="sidebar-search-input" />
+                        <button className="sidebar-search-button" type="button" aria-label="Search">
+                            <img src={Search} alt="" style={{ width: "18px", height: "18px" }} />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="sidebar-buttons" onClick={() => navigate("/tasks")}>
+                    <div className="sidebar-row">
+                        <img src={Home} alt="" />
+                        <Typography variant="h6">Tasks</Typography>
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); openAddTask("/tasks", "Add task"); }} aria-label="Add task">
+                            <img src={Plus} alt="" />
+                        </button>
+                    </div>
+                </div>
+                <div className="sidebar-buttons" onClick={() => navigate("/planned")}>
+                    <div className="sidebar-row">
+                        <img src={Planned} alt="" />
+                        <Typography variant="h6">Planned</Typography>
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); openAddTask("/planned", "Add planned task"); }} aria-label="Add planned task">
+                            <img src={Plus} alt="" />
+                        </button>
+                    </div>
+                </div>
+                <div className="sidebar-buttons" onClick={() => navigate("/important")}>
+                    <div className="sidebar-row">
+                        <img src={Star} alt="" />
+                        <Typography variant="h6">Important</Typography>
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); openAddTask("/important", "Add important task", true); }} aria-label="Add important task">
+                            <img src={Plus} alt="" />
+                        </button>
+                    </div>
+                </div>
+                <div className="sidebar-buttons" onClick={() => navigate("/spaces")}>
+                    <div className="sidebar-row">
+                        <img src={Space} alt="" />
+                        <Typography variant="h6">Spaces</Typography>
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate("/add-space", { state: { returnTo: "/spaces", title: "Add new space" } }); }} aria-label="Add space">
+                            <img src={Plus} alt="" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Đường kẻ */}
+                <div className="sidebar-line"></div>
+                <div className="space-list">
+                    <Typography className="space-header">My Space</Typography>
+                    {/*Render space list*/}
+                    <SpaceList />
+                </div>
+
+                {/*Tên tác giả */}
+                <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#1D4ED8", fontStyle: "italic", display: "flex", marginTop: "auto" }}>@Made by Dante<br />Nguyen Van Tien Dat</Typography>
+
+            </aside>
+
+            <main className="main-content">
+
+                <div className="search-bar">
+                    <input type="text" placeholder="Search your work ..." className="search-input" />
+                    <button className="search-button">
+                        <img src={Search} alt="Search" style={{ width: "18px", height: "18px" }} />
+                    </button>
+                </div>
+
+                <section className="add-task-panel" aria-label={title}>
+                    <form className="add-task-form" onSubmit={handleUpdateTask}>
+                        <div className="add-task-form-header">
+                            <h2>{title}</h2>
+                            <button type="button" className="modal-close-button" onClick={() => navigate(returnTo)} aria-label="Close form">&times;</button>
+                        </div>
+                        <label htmlFor="task-name">Task name</label>
+                        <input id="task-name" type="text" value={name} onChange={(event) => setName(event.target.value)} required autoFocus />
+                        <label htmlFor="task-description">Description</label>
+                        <textarea id="task-description" value={description} onChange={(event) => setDescription(event.target.value)} rows="3" />
+                        <label htmlFor="task-due-date">Due date</label>
+                        <input id="task-due-date" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+                        <label htmlFor="task-status">Status</label>
+                        <select id="task-status" value={status} onChange={(event) => setStatus(event.target.value)}>
+                            <option value="To do">To do</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Done">Done</option>
+                        </select>
+                        <label className="task-important-field">
+                            <input type="checkbox" checked={important} onChange={(event) => setImportant(event.target.checked)} />
+                            Important
+                        </label>
+                        <div className="add-task-form-actions">
+                            <button type="button" className="modal-cancel-button" onClick={() => navigate(returnTo)}>Cancel</button>
+                            <button type="submit" className="modal-submit-button" disabled={isSubmitting}>Save</button>
+                        </div>
+                    </form>
+                </section>
+            </main>
+        </>
+    );
+}
+
+export default EditTask;

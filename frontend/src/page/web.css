@@ -158,10 +158,17 @@
 }
 
 .sidebar-buttons:hover {
+    background-color: #eef4fc;
+    border-radius: 10px;
+    color: #5d85f2;
+}
+
+.sidebar-buttons.active {
     background-color: #E5EFFD;
-    border-radius: 5px;
+    border-radius: 10px;
     color: #1D4ED8;
 }
+
 
 
 .sidebar-button-icon {
@@ -778,7 +785,7 @@
     width: calc(100% - 300px);
     overflow-y: auto;
     overflow-x: hidden;
-    background-color: #F4F7FB;
+    background-color: #F8F6FF; /* tím lavender rất nhạt */
     align-items: center;
     flex-direction: column;
 
@@ -1098,6 +1105,7 @@
     background-color: #E5EFFD;
     border-radius: 4px;
     outline: none;
+    color: #1D4ED8;
 }
 
 .space-icon {
