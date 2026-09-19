@@ -1,22 +1,23 @@
 import os
 import ssl
+import tempfile
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 load_dotenv()
 
-DB_SSL_CA = os.getenv("DB_SSL_CA")  # Path to the SSL CA certificate file, if needed
-if not DB_SSL_CA:
-    raise ValueError("DATABASE_URL is not set in the environment variables.")
-
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL is not set in the environment variables.")
 
-ctx = ssl.create_default_context(cafile=DB_SSL_CA) if DB_SSL_CA else None
-ctx.check_hostname = False if ctx else None
-ctx.verify_mode = ssl.CERT_NONE if ctx else None
+CA_FILE_PATH = os.path.join(os.path.dirname(__file__), "ca.pem")
+
+ctx = None
+if os.path.exists(CA_FILE_PATH):
+    ctx = ssl.create_default_context(cafile=CA_FILE_PATH)
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
 
 
 engine = create_engine(
