@@ -8,3 +8,4 @@ python-jose
 fastapi-mail
 requests
 mangum
+pymysql
