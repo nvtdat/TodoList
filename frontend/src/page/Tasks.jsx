@@ -15,12 +15,15 @@ import Calendar from '../assets/calendar.png';
 import Search from '../assets/search.png';
 import ThreeDots from '../assets/three-dots 3.png';
 import SpaceList from "./SpaceList";
+import { completeTask, deleteTask, getTasks, updateTask } from "../services/authApi";
+import toast from "react-hot-toast";
 
 function Tasks() {
     const [userTasks, setUserTasks] = useState([]);
     const [openTaskMenu, setOpenTaskMenu] = useState(null);
     const [userSpaces, setUserSpaces] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
     const handlePlanClick = () => {
         // Navigate to the Planned page
@@ -35,47 +38,33 @@ function Tasks() {
         navigate('/spaces');
     }
 
-    const toggleCompleted = (taskId) => {
-        setUserTasks((prevTasks) =>
-            prevTasks.map((task, index) =>
-                index === taskId ? { ...task, status: task.status === "Done" ? "To do" : "Done" } : task
-            )
-        );
+    const toggleCompleted = async (task) => {
+
+        try {
+            const updatedTask = await updateTask(task.id, { is_completed: !task.is_completed });
+            setUserTasks((previousTasks) => previousTasks.map((currentTask) => (
+                currentTask.id === task.id ? updatedTask : currentTask
+            )));
+        } catch (error) {
+            toast.error(error.message);
+        }
     }
 
-    const toggleImportant = (taskId) => {
-        setUserTasks((prevTasks) =>
-            prevTasks.map((task, index) =>
-                index === taskId ? { ...task, important: !task.important } : task
-            )
-        );
+    const toggleImportant = async (task) => {
+        try {
+            const updatedTask = await updateTask(task.id, { is_important: !task.is_important });
+            setUserTasks((previousTasks) => previousTasks.map((currentTask) => (
+                currentTask.id === task.id ? updatedTask : currentTask
+            )));
+        } catch (error) {
+            toast.error(error.message);
+        }
     }
 
     useEffect(() => {
-        setUserTasks([
-            {
-                name: "Finish the project",
-                description: "Complete the project by the end of the week",
-                dueDate: "2024-06-30",
-                status: "Done",
-                important: true
-            },
-            {
-                name: "Buy groceries",
-                description: "Milk, eggs, bread, and fruits",
-                dueDate: "2024-06-28",
-                status: "To do",
-                important: false
-            },
-
-            {
-                name: "Do Chores",
-                description: "Finish the household chores",
-                dueDate: "2024-06-29",
-                status: "To do",
-                important: false
-            }
-        ]);
+        getTasks()
+            .then(setUserTasks)
+            .catch((error) => toast.error(error.message));
     }, []);
 
     useEffect(() => {
@@ -147,6 +136,14 @@ function Tasks() {
         )
     }
 
+    function formatDueDate(dueDate) {
+        if (!dueDate) {
+            return "No date";
+        }
+
+        return new Date(dueDate).toLocaleDateString("en-CA");
+    }
+
     {/*Star icon to mark important tasks*/ }
     function StarIcon({ filled, size = 20 }) {
         return (
@@ -187,57 +184,69 @@ function Tasks() {
 
 
     function renderTasks() {
-        const filteredTasks = userTasks
-            .map((task, originalIndex) => ({ task, originalIndex }))
-            .filter(({ task }) => {
-            if (activeFilter === 'all') {
-                return true;
-            }
+        const q = searchQuery.toLowerCase().trim();
+        const filteredTasks = userTasks.filter((task) => {
+            const matchesSearch =
+                !q ||
+                task.title?.toLowerCase().includes(q) ||
+                task.description?.toLowerCase().includes(q);
 
+            if (!matchesSearch) {
+                return false;
+            }
             if (activeFilter === 'todo') {
-                return task.status !== 'Done';
+                return !task.is_completed;
             }
 
             if (activeFilter === 'done') {
-                return task.status === 'Done';
+                return task.is_completed;
             }
-            return false;
+
+            return true;
         });
 
         if (filteredTasks.length === 0) {
             return <p className="empty-filter-message">No tasks in this filter.</p>;
         }
 
-        return filteredTasks.map(({ task, originalIndex }) => (
-            <div key={originalIndex} className="task-card standard-task-card">
+        return filteredTasks.map((task, index) => (
+            <div key={task.id || index} className="task-card standard-task-card">
                 {/*Ô check để đánh dấu hoàn thành*/}
                 <input
                     type="checkbox"
-                    checked={task.status === "Done"}
+                    checked={task.is_completed === true}
                     className="task-checkbox"
-                    onChange={() => toggleCompleted(originalIndex)}
+                    onChange={() => toggleCompleted(task)}
                 />
                 {/*Tên task và mô tả*/}
-                <Typography className="standard-task-title" variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px", fontWeight: "bold" }}>{task.name}</Typography>
+                <Typography className="standard-task-title" variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px", fontWeight: "bold" }}>{task.title}</Typography>
                 <Typography className="standard-task-description" variant="body1" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px" }}>{task.description}</Typography>
                 {/*Icon ngôi sao để đánh dấu công việc quan trọng*/}
-                <button className={`important-btn ${task.important ? 'active' : ''}`} onClick={() => toggleImportant(originalIndex)}>
-                    <StarIcon filled={task.important} />
+                <button className={`important-btn ${task.is_important ? 'active' : ''}`} onClick={() => toggleImportant(task)}>
+                    <StarIcon filled={task.is_important} />
                 </button>
                 <div className="task-actions">
                     <button
                         className="task-actions-button"
                         type="button"
-                        aria-label={`Open actions for ${task.name}`}
-                        aria-expanded={openTaskMenu === originalIndex}
-                        onClick={() => setOpenTaskMenu(openTaskMenu === originalIndex ? null : originalIndex)}
+                        aria-label={`Open actions for ${task.title}`}
+                        aria-expanded={openTaskMenu === task.id}
+                        onClick={() => setOpenTaskMenu(openTaskMenu === task.id ? null : task.id)}
                     >
                         <img src={ThreeDots} alt="" />
                     </button>
-                    {openTaskMenu === originalIndex && (
+                    {openTaskMenu === task.id && (
                         <div className="task-actions-menu">
                             <button type="button" onClick={() => setOpenTaskMenu(null)}>Edit task</button>
-                            <button className="delete-action" type="button" onClick={() => setOpenTaskMenu(null)}>Delete task</button>
+                            <button className="delete-action" type="button" onClick={async () => {
+                                try {
+                                    await deleteTask(task.id);
+                                    setUserTasks((previousTasks) => previousTasks.filter((currentTask) => currentTask.id !== task.id));
+                                    setOpenTaskMenu(null);
+                                } catch (error) {
+                                    toast.error(error.message);
+                                }
+                            }}>Delete task</button>
                         </div>
                     )}
                 </div>
@@ -245,9 +254,9 @@ function Tasks() {
                 <div className="task-meta">
                     <div className="task-due-date">
                         <img src={Calendar} alt="Calendar" style={{ width: "16px", height: "16px", marginRight: "4px" }} />
-                        <Typography variant="body2" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "12px" }}>Due: {task.dueDate}</Typography>
+                        <Typography variant="body2" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "12px" }}>Due: {formatDueDate(task.due_date)}</Typography>
                     </div>
-                    {renderStatusBadge(task.status)}
+                    {renderStatusBadge(task.is_completed ? "Done" : "To do")}
                 </div>
             </div>
         ));
@@ -296,7 +305,7 @@ function Tasks() {
     }
 
     function countCompletedTasks() {
-        return userTasks.filter(task => task.status === "Done").length;
+        return userTasks.filter(task => task.is_completed).length;
     }
 
     return (
@@ -348,7 +357,7 @@ function Tasks() {
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={Space} alt="Space" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Spaces</Typography>
-                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate('/add-task', { state: { returnTo: '/spaces', title: 'Add task to a space' } }); }} aria-label="Add task to a space">
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate('/add-space', { state: { returnTo: '/spaces', title: 'Add new space' } }); }} aria-label="Add space">
                             <img src={Plus} alt="Plus" />
                         </button>
                     </div>
@@ -362,18 +371,26 @@ function Tasks() {
                     <SpaceList />
                 </div>
 
-                {/*Nút log out*/}
-                <button className="logout-button" type="button" onClick={() => navigate('/')}>
-                    <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#EF4444", fontWeight: "bold" }}>Log out</Typography>
-                </button>
-                
-                {/*Tên tác giả */}
-                <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#1D4ED8", fontStyle: "italic", display: "flex", marginTop: "auto" }}>@Made by Dante<br />Nguyen Van Tien Dat</Typography>
+                <div className="sidebar-footer">
+                    {/*Nút log out*/}
+                    <button className="logout-button" type="button" onClick={() => navigate('/')}>
+                        <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#EF4444", fontWeight: "bold" }}>Log out</Typography>
+                    </button>
+
+                    {/*Tên tác giả */}
+                    <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#1D4ED8", fontStyle: "italic" }}>@Made by Dante<br />Nguyen Van Tien Dat</Typography>
+                </div>
             </aside>
 
             <main className="main-content">
                 <div className="search-bar">
-                    <input type="text" placeholder="Search your work ..." className="search-input" />
+                    <input
+                        type="text"
+                        placeholder="Search your work ..."
+                        className="search-input"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                     <button className="search-button">
                         <img src={Search} alt="Search" style={{ width: "18px", height: "18px" }} />
                     </button>

@@ -34,3 +34,7 @@ env/
 *.env
 
 __pycache__/
+
+# File ca.pem
+ca.pem
+*ca.pem

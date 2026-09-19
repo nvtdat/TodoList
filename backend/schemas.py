@@ -30,12 +30,16 @@ class RescheduleRequest(BaseModel):
 class SpaceCreate(BaseModel):
     name: str = Field(..., example="Work")
     description: str = Field(..., example="Tasks related to work")
+    color_hex: str | None = Field(default=None, example="#FF0000")
+    icon: str | None = Field(default=None, example="folder")
 
 
 class SpaceResponse(SpaceCreate):
     id: int
     user_id: int
     created_at: datetime
+    color_hex: str | None
+    icon: str | None
 
     class Config:
         from_attributes = True
@@ -68,3 +72,6 @@ class Token(BaseModel):
     token_type: str
 
 
+#==== GOOGLE OAUTH2 ====#
+class GoogleUser(BaseModel):
+    token: str = Field(..., example="Google OAuth2 token")

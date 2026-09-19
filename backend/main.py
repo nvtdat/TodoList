@@ -1,10 +1,18 @@
-from fastapi import FastAPI, Depends, HTTPException
+import os
+
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from jose import JWTError
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from database import engine, Base, get_db
+
 import auth
-import schemas
 import models
+import schemas
+from database import Base, engine, get_db
+from email_utils import send_verification_email
+from google_auth import fetch_google_account
+
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
@@ -65,7 +73,7 @@ def update_task(task_id: int, task: schemas.TaskUpdate, db: Session = Depends(ge
     db_task = db.query(models.Task).filter(models.Task.id == task_id, models.Task.user_id == current_user.id).first()
     if not db_task:
         raise HTTPException(status_code=404, detail="Task not found")
-    for key, value in task.dict().items():
+    for key, value in task.dict(exclude_unset=True).items():
         setattr(db_task, key, value)
     db.commit()
     db.refresh(db_task)
@@ -132,12 +140,23 @@ def create_space(space: schemas.SpaceCreate, db: Session = Depends(get_db), curr
     db_space = models.Space(
         name=space.name,
         description=space.description,
+        color_hex=space.color_hex,
+        icon=space.icon,
         user_id=current_user.id
     )
     db.add(db_space)
     db.commit()
     db.refresh(db_space)
     return db_space
+
+@app.delete("/spaces/{space_id}")
+def delete_space(space_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_authenticated_user)):
+    db_space = db.query(models.Space).filter(models.Space.id == space_id, models.Space.user_id == current_user.id).first()
+    if not db_space:
+        raise HTTPException(status_code=404, detail="Space not found")
+    db.delete(db_space)
+    db.commit()
+    return {"message": "Space deleted successfully!"}
 
 @app.get("/spaces/{space_id}")
 def get_space(space_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_authenticated_user)):
@@ -178,27 +197,64 @@ def create_task_in_space(space_id: int, task: schemas.TaskCreate, db: Session = 
 
 #===== User =====#
 @app.post("/users", response_model=schemas.UserResponse)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+async def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     db_user = models.User(
         name=user.name,
         email=user.email,
-        password_hash=auth.hash_password(user.password)
+        password_hash=auth.hash_password(user.password),
+        is_verified=False
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    verify_token = auth.create_access_token(data={"sub": db_user.email})
+    await send_verification_email(db_user.email, verify_token)
     return db_user
+
+@app.get("/verify")
+async def verify_email(token: str, db: Session = Depends(get_db)):
+    try:
+        payload = auth.decode_access_token(token)
+        if not payload:  
+            raise HTTPException(status_code=401, detail="Token không hợp lệ hoặc đã hết hạn")
+        email = payload.get("sub")
+        db_user = db.query(models.User).filter(models.User.email == email).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if db_user.is_verified:
+            raise HTTPException(status_code=400, detail="Email already verified")
+        db_user.is_verified = True
+        db.commit()
+        db.refresh(db_user)
+        return {"message": "Email verified successfully"}
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+class ResendVerificationRequest(BaseModel):
+    email: str
+
+@app.post("/resend-verification")
+async def resend_verification_email(data: ResendVerificationRequest, db: Session = Depends(get_db)):
+    email = data.email
+    db_user = db.query(models.User).filter(models.User.email == email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if db_user.is_verified:
+        raise HTTPException(status_code=400, detail="Email already verified")
+    verify_token = auth.create_access_token(data={"sub": db_user.email})
+    await send_verification_email(db_user.email, verify_token)
+    return {"message": "Verification email resent successfully"}
 
 @app.post("/login", response_model=schemas.Token)
 def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if not db_user:
+    if not db_user or not auth.verify_password(user.password, db_user.password_hash):
         raise HTTPException(status_code=400, detail="Invalid email or password")
-    if not auth.verify_password(user.password, db_user.password_hash):
-        raise HTTPException(status_code=400, detail="Invalid email or password")
+    if not db_user.is_verified:
+        raise HTTPException(status_code=400, detail="Please verify your email")
     access_token = auth.create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -213,9 +269,29 @@ def get_me(current_user: models.User = Depends(get_authenticated_user)):
     return {"message": f"Hello {current_user.name}, you can create a task now!"}
 
 
+#===== Google OAuth2 =====#
+@app.post("/google-login", response_model=schemas.Token)
+def google_login(google_user: schemas.GoogleUser, db: Session = Depends(get_db)):
+    account = fetch_google_account(google_user.token)
 
-    
+    db_user = db.query(models.User).filter(models.User.email == account.email).first()
+    if not db_user:
+        db_user = models.User(
+            name=account.name,
+            email=account.email,
+            password_hash=auth.hash_password(os.urandom(16).hex()),
+            is_verified=True,
+            google_id=account.google_id
+        )
+        db.add(db_user)
+    else:
+        # Google đã xác minh email này nên tài khoản cũ cũng được coi là hợp lệ.
+        if not db_user.is_verified:
+            db_user.is_verified = True
+        if not db_user.google_id:
+            db_user.google_id = account.google_id
+    db.commit()
+    db.refresh(db_user)
 
-
-
-
+    access_token = auth.create_access_token(data={"sub": db_user.email})
+    return {"access_token": access_token, "token_type": "bearer"}

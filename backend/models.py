@@ -10,6 +10,8 @@ class User(Base):
     email = Column(String(100), unique=True, index=True)
     password_hash = Column(String(255))
     created_at = Column(DateTime, default=datetime.utcnow)
+    is_verified = Column(Boolean, default=False)
+    google_id = Column(String(255), unique=True, index=True)
 
 
 class Task(Base):
@@ -30,5 +32,7 @@ class Space(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), index=True)
     description = Column(String(500), index=True)
+    color_hex = Column(String(20), index=True)
+    icon = Column(String(50))
     user_id = Column(Integer, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -86,3 +86,8 @@ lerna-debug.log*
 # ==========================================
 logs/
 *.log
+
+
+## File ca.pem
+ca.pem
+*ca.pem

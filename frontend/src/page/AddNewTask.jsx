@@ -10,6 +10,8 @@ import Space from "../assets/space.png";
 import Plus from "../assets/plus.png";
 import Search from "../assets/search.png";
 import SpaceList from "./SpaceList";
+import { createTask } from "../services/authApi";
+import toast from "react-hot-toast";
 
 function AddNewTask() {
     const navigate = useNavigate();
@@ -20,6 +22,7 @@ function AddNewTask() {
     const [dueDate, setDueDate] = useState("");
     const [status, setStatus] = useState("To do");
     const [important, setImportant] = useState(defaultImportant);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [userSpaces, setUserSpaces] = useState([]);
     useEffect(() => {
@@ -58,11 +61,22 @@ function AddNewTask() {
     }, []);
 
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
-        const newTask = { name: name.trim(), description: description.trim(), dueDate, status, important };
-        localStorage.setItem("todo-list:new-task", JSON.stringify(newTask));
-        navigate(returnTo);
+        setIsSubmitting(true);
+
+        try {
+            await createTask(name.trim(), description.trim(), {
+                due_date: dueDate ? `${dueDate}T00:00:00` : null,
+                is_completed: status === "Done",
+                is_important: important,
+            });
+            navigate(returnTo);
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const openAddTask = (target, targetTitle, targetImportant = false) => {
@@ -132,7 +146,7 @@ function AddNewTask() {
                     <div className="sidebar-row">
                         <img src={Space} alt="" />
                         <Typography variant="h6">Spaces</Typography>
-                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); openAddTask("/spaces", "Add task to a space"); }} aria-label="Add task to a space">
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate("/add-space", { state: { returnTo: "/spaces", title: "Add new space" } }); }} aria-label="Add space">
                             <img src={Plus} alt="" />
                         </button>
                     </div>
@@ -184,7 +198,7 @@ function AddNewTask() {
                         </label>
                         <div className="add-task-form-actions">
                             <button type="button" className="modal-cancel-button" onClick={() => navigate(returnTo)}>Cancel</button>
-                            <button type="submit" className="modal-submit-button">Add task</button>
+                            <button type="submit" className="modal-submit-button" disabled={isSubmitting}>Add task</button>
                         </div>
                     </form>
                 </section>

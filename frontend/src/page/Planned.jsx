@@ -18,6 +18,8 @@ import ThreeDots from '../assets/three-dots 3.png';
 import Crisis from '../assets/crisis.png';
 import Rocket from '../assets/rocket.png';
 import SpaceList from "./SpaceList";
+import toast from "react-hot-toast";
+import { completeTask, deleteTask, getPlannedTasks } from "../services/authApi";
 
 function Planned() {
     const navigate = useNavigate();
@@ -25,7 +27,8 @@ function Planned() {
     const [userTasks, setUserTasks] = useState([]);
     const [userSpaces, setUserSpaces] = useState([]);
     const [activeFilter, setActiveFilter] = useState('today');
-    
+    const [searchQuery, setSearchQuery] = useState('');
+
     /*Handle click on Planned button*/
     const handlePlanClick = () => {
         navigate('/planned');
@@ -38,7 +41,7 @@ function Planned() {
     const handleSpacesClick = () => {
         navigate('/spaces');
     }
-    
+
     const handleTaskClick = () => {
         navigate('/tasks');
     }
@@ -81,24 +84,31 @@ function Planned() {
         ));
     }
 
-    const toggleCompleted = (taskId) => {
-        setUserTasks((prevTasks) =>
-            prevTasks.map((task, index) =>
-                index === taskId ? { ...task, status: task.status === "Done" ? "To do" : "Done" } : task
-            )
-        );
+    const toggleCompleted = async (task) => {
+        if (task.is_completed) {
+            return;
+        }
+
+        try {
+            const updatedTask = await completeTask(task.id);
+            setUserTasks((previousTasks) => previousTasks.map((currentTask) => (
+                currentTask.id === task.id ? updatedTask : currentTask
+            )));
+        } catch (error) {
+            toast.error(error.message);
+        }
     };
 
     const toggleImportant = (taskId) => {
         setUserTasks((prevTasks) =>
             prevTasks.map((task, index) =>
-                index === taskId ? { ...task, important: !task.important } : task
+                index === taskId ? { ...task, is_important: !task.is_important } : task
             )
         );
     };
 
     function renderStatusBadge(task) {
-        const deadline = new Date(task.deadline__time);
+        const deadline = new Date(task.due_date);
         const now = new Date();
         const isToday = deadline.toDateString() === now.toDateString();
         const remainingMilliseconds = deadline.getTime() - now.getTime();
@@ -108,12 +118,12 @@ function Planned() {
         const remainingTime = remainingHours > 0
             ? `${remainingHours}h ${minutes}m left`
             : `${minutes}m left`;
-        const badgeText = task.status === "Done"
+        const badgeText = task.is_completed
             ? "Done"
             : isToday
                 ? remainingTime
                 : "To do";
-        const textColor = task.status === "Done" ? "#10B981" : "#DC2626";
+        const textColor = task.is_completed ? "#10B981" : "#DC2626";
 
         return (
             <span
@@ -135,22 +145,34 @@ function Planned() {
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const startOfTomorrow = new Date(startOfToday);
         startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+        const q = searchQuery.toLowerCase().trim();
 
-        return userTasks
-            .map((task, originalIndex) => ({ task, originalIndex }))
-            .filter(({ task }) => {
-                const deadline = new Date(task.deadline__time);
+        return userTasks.filter((task) => {
+            const deadline = new Date(task.due_date);
 
-                if (activeFilter === 'today') {
-                    return deadline >= startOfToday && deadline < startOfTomorrow;
-                }
+            if (Number.isNaN(deadline.getTime())) {
+                return false;
+            }
 
-                if (activeFilter === 'overdue') {
-                    return deadline < startOfToday;
-                }
+            const matchesSearch =
+                !q ||
+                task.title?.toLowerCase().includes(q) ||
+                task.description?.toLowerCase().includes(q);
 
-                return deadline >= startOfTomorrow;
-            });
+            if (!matchesSearch) {
+                return false;
+            }
+
+            if (activeFilter === 'today') {
+                return deadline >= startOfToday && deadline < startOfTomorrow;
+            }
+
+            if (activeFilter === 'overdue') {
+                return deadline < startOfToday;
+            }
+
+            return deadline >= startOfTomorrow;
+        });
     }
 
     function renderPlanned() {
@@ -160,39 +182,46 @@ function Planned() {
             return <p className="empty-filter-message">No planned tasks in this filter.</p>;
         }
 
-        return filteredTasks.map(({ task, originalIndex }) => (
-            
-            <div key={originalIndex} className="task-card planned-task-card">
+        return filteredTasks.map((task, index) => (
+            <div key={task.id || index} className="task-card planned-task-card">
                 <input
                     type="checkbox"
-                    checked={task.status === "Done"}
+                    checked={task.is_completed === true}
                     className="task-checkbox"
-                    onChange={() => toggleCompleted(originalIndex)}
+                    onChange={() => toggleCompleted(task)}
                 />
-                <Typography className="planned-task-title" variant="h6" sx={{ fontSize: "18px", fontWeight: "bold" }}>{task.name}</Typography>
+                <Typography className="planned-task-title" variant="h6" sx={{ fontSize: "18px", fontWeight: "bold" }}>{task.title}</Typography>
                 <Typography className="planned-task-description" variant="body1" sx={{ fontSize: "14px" }}>{task.description}</Typography>
-                
+
                 <div className="task-actions">
                     <button
                         className="task-actions-button"
                         type="button"
-                        aria-label={`Open actions for ${task.name}`}
-                        aria-expanded={openTaskMenu === originalIndex}
-                        onClick={() => setOpenTaskMenu(openTaskMenu === originalIndex ? null : originalIndex)}
+                        aria-label={`Open actions for ${task.title}`}
+                        aria-expanded={openTaskMenu === task.id}
+                        onClick={() => setOpenTaskMenu(openTaskMenu === task.id ? null : task.id)}
                     >
                         <img src={ThreeDots} alt="" />
                     </button>
-                    {openTaskMenu === originalIndex && (
+                    {openTaskMenu === task.id && (
                         <div className="task-actions-menu">
                             <button type="button" onClick={() => setOpenTaskMenu(null)}>Edit task</button>
-                            <button className="delete-action" type="button" onClick={() => setOpenTaskMenu(null)}>Delete task</button>
+                            <button className="delete-action" type="button" onClick={async () => {
+                                try {
+                                    await deleteTask(task.id);
+                                    setUserTasks((previousTasks) => previousTasks.filter((currentTask) => currentTask.id !== task.id));
+                                    setOpenTaskMenu(null);
+                                } catch (error) {
+                                    toast.error(error.message);
+                                }
+                            }}>Delete task</button>
                         </div>
                     )}
                 </div>
                 <div className="task-meta">
                     <div className="task-due-date">
                         <img src={Calendar} alt="Calendar" style={{ width: "16px", height: "16px", marginRight: "4px" }} />
-                        <Typography variant="body2" sx={{ fontSize: "12px" }}>Due: {task.dueDate}</Typography>
+                        <Typography variant="body2" sx={{ fontSize: "12px" }}>Due: {task.due_date || "No date"}</Typography>
                     </div>
                     {renderStatusBadge(task)}
                 </div>
@@ -235,47 +264,18 @@ function Planned() {
     }
 
     function countCompletedPlanned() {
-        return userTasks.filter((task) => task.status === "Done").length;
+        return userTasks.filter((task) => task.is_completed).length;
     }
 
-    {/* Render planned tasks list */}
+    {/* Render planned tasks list */ }
     useEffect(() => {
-        //Danh sách các task đã được lên kế hoạch (planned tasks)
-        const plannedTasks = [
-            {
-                name: "Finish React Project",
-                description: "Complete the frontend of the React project by Friday.",
-                dueDate: "2024-06-14",
-                status: "Done",
-                deadline__time: "2024-06-14T17:00:00Z",
-            },
-            {
-                name: "Prepare Presentation",
-                description: "Create slides for the upcoming team meeting.",
-                dueDate: "2024-06-15",
-                status: "To do",
-                deadline__time: "2024-06-15T10:00:00Z",
-            },
-            {
-                name: "Grocery Shopping",
-                description: "Buy ingredients for the weekend dinner.",
-                dueDate: "2024-06-16",
-                status: "To do",
-                deadline__time: "2024-06-16T18:00:00Z",
-            },
-            {
-                name: "Doctor's Appointment",
-                description: "Annual check-up with Dr. Smith.",
-                dueDate: "2026-09-07",
-                status: "To do",
-                deadline__time: "2026-09-07T09:00:00Z",
-            }
-        ];
-        setUserTasks(plannedTasks);
+        getPlannedTasks()
+            .then(setUserTasks)
+            .catch((error) => toast.error(error.message));
     }, []);
 
 
-    {/*Nút filter tasks*/}
+    {/*Nút filter tasks*/ }
 
     function FilterTabs() {
         const filters = [
@@ -328,7 +328,7 @@ function Planned() {
                 </div>
                 <div className="sidebar-buttons" onClick={handlePlanClick}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                            <img src={PlannedIcon} alt="" />
+                        <img src={PlannedIcon} alt="" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Planned</Typography>
                         <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate('/add-task', { state: { returnTo: '/planned', title: 'Add planned task' } }); }} aria-label="Add planned task">
                             <img src={Plus} alt="Plus" />
@@ -348,7 +348,7 @@ function Planned() {
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                         <img src={Space} alt="Space" />
                         <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "18px" }}>Spaces</Typography>
-                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate('/add-task', { state: { returnTo: '/spaces', title: 'Add task to a space' } }); }} aria-label="Add task to a space">
+                        <button className="sidebar-button-icon" type="button" onClick={(event) => { event.stopPropagation(); navigate('/add-space', { state: { returnTo: '/spaces', title: 'Add new space' } }); }} aria-label="Add space">
                             <img src={Plus} alt="Plus" />
                         </button>
                     </div>
@@ -362,13 +362,26 @@ function Planned() {
                     <SpaceList />
                 </div>
 
-                {/*Tên tác giả */}
-                <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#1D4ED8", fontStyle: "italic", display: "flex", marginTop: "auto" }}>@Made by Dante<br />Nguyen Van Tien Dat</Typography>
+                <div className="sidebar-footer">
+                    {/*Nút log out*/}
+                    <button className="logout-button" type="button" onClick={() => navigate('/')}>
+                        <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#EF4444", fontWeight: "bold" }}>Log out</Typography>
+                    </button>
+
+                    {/*Tên tác giả */}
+                    <Typography variant="h6" sx={{ fontFamily: 'Iosevka Charon, monospace', fontSize: "14px", color: "#1D4ED8", fontStyle: "italic" }}>@Made by Dante<br />Nguyen Van Tien Dat</Typography>
+                </div>
             </aside>
 
             <main className="main-content">
                 <div className="search-bar">
-                    <input type="text" placeholder="Search your planned work ..." className="search-input" />
+                    <input
+                        type="text"
+                        placeholder="Search your planned work ..."
+                        className="search-input"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                     <button className="search-button" type="button">
                         <img src={Search} alt="Search" style={{ width: "18px", height: "18px" }} />
                     </button>
