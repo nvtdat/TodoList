@@ -22,7 +22,8 @@ app.add_middleware(
     allow_origins=[
                     "http://localhost:5173", 
                     "http://127.0.0.1:5173",
-                    "https://todo-list-lkr9.vercel.app"
+                    "https://todo-list-lkr9.vercel.app",
+                    "https://todo-list-lkr9-33ieg8jk2-dats-projects-a51e6e38.vercel.app"
                     ],
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
