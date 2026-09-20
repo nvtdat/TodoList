@@ -78,5 +78,6 @@ npm run dev
 Cần tạo file `.env` ở cả hai thư mục với các biến môi trường tương ứng (database, JWT secret, Google Client ID, cấu hình email...).
 
 ## Tác giả
+Nguyễn Văn Tiến Đạt.
 
-Nguyễn Văn Tiến Đạt
+Cảm ơn mọi người đã sử dụng! Nếu có vấn đề gì hay lỗi gặp phải trong sử dụng, hãy email mình thông qua Email: nvtdat30052006@gmail.com
