@@ -34,6 +34,7 @@ function Space() {
     const [userTasks, setUserTasks] = useState([]);
     const [userSpaces, setUserSpaces] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [spaceSearchQuery, setSpaceSearchQuery] = useState('');
     const [activeButton, setActiveButton] = useState('spaces');
 
     const handleTaskClick = () => {
@@ -163,7 +164,13 @@ function Space() {
                 <div className="sidebar-content">
                     {/*Phần search bar*/}
                     <div className="sidebar-search">
-                        <input type="text" placeholder="Search..." className="sidebar-search-input" />
+                        <input 
+                            type="text" 
+                            placeholder="Space..." 
+                            className="sidebar-search-input" 
+                            value={spaceSearchQuery}
+                            onChange={(e) => setSpaceSearchQuery(e.target.value)}
+                        />
                         <button className="sidebar-search-button">
                             <img src={Search} alt="Search" style={{ width: "18px", height: "18px" }} />
                         </button>
@@ -216,7 +223,7 @@ function Space() {
                 <div className="space-list">
                     <Typography className="space-header">My Space</Typography>
                     {/*Render space list*/}
-                    <SpaceList />
+                    <SpaceList searchQuery={spaceSearchQuery}/>
                 </div>
 
                 <div className="sidebar-footer">

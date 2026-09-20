@@ -26,6 +26,7 @@ function Important() {
     const [userSpaces, setUserSpaces] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [spaceSearchQuery, setSpaceSearchQuery] = useState('');
     const [activeButton, setActiveButton] = useState('important');
 
     const handlePlanClick = () => {
@@ -241,7 +242,13 @@ function Important() {
                 <div className="sidebar-content">
                     {/*Phần search bar*/}
                     <div className="sidebar-search">
-                        <input type="text" placeholder="Search..." className="sidebar-search-input" />
+                        <input 
+                            type="text" 
+                            placeholder="Space..." 
+                            className="sidebar-search-input" 
+                            value={spaceSearchQuery}
+                            onChange={(e) => setSpaceSearchQuery(e.target.value)}
+                        />
                         <button className="sidebar-search-button">
                             <img src={Search} alt="Search" style={{ width: "18px", height: "18px" }} />
                         </button>
@@ -294,7 +301,7 @@ function Important() {
                 <div className="space-list">
                     <Typography className="space-header">My Space</Typography>
                     {/*Render space list*/}
-                    <SpaceList />
+                    <SpaceList searchQuery={spaceSearchQuery}/>
                 </div>
 
                 <div className="sidebar-footer">

@@ -25,6 +25,7 @@ function EditTask() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [userSpaces, setUserSpaces] = useState([]);
+    const [spaceSearchQuery, setSpaceSearchQuery] = useState('');
     useEffect(() => {
         setUserSpaces([
             {
@@ -121,7 +122,13 @@ function EditTask() {
                 </div>
                 <div className="sidebar-content">
                     <div className="sidebar-search">
-                        <input type="text" placeholder="Search..." className="sidebar-search-input" />
+                        <input 
+                            type="text" 
+                            placeholder="Space..." 
+                            className="sidebar-search-input" 
+                            value={spaceSearchQuery}
+                            onChange={(e) => setSpaceSearchQuery(e.target.value)}
+                        />
                         <button className="sidebar-search-button" type="button" aria-label="Search">
                             <img src={Search} alt="" style={{ width: "18px", height: "18px" }} />
                         </button>
@@ -170,7 +177,7 @@ function EditTask() {
                 <div className="space-list">
                     <Typography className="space-header">My Space</Typography>
                     {/*Render space list*/}
-                    <SpaceList />
+                    <SpaceList searchQuery={spaceSearchQuery}/>
                 </div>
 
                 {/*Tên tác giả */}

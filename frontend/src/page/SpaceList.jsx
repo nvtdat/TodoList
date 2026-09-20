@@ -60,8 +60,9 @@ export function getSpaces() {
     return [...DEFAULT_SPACES, ...readSavedSpaces()];
 }
 
-function SpaceList() {
+function SpaceList({searchQuery = ""}) {
     const navigate = useNavigate();
+    
     const [spaces, setSpaces] = useState([]);
 
     useEffect(() => {
@@ -84,7 +85,11 @@ function SpaceList() {
         }
     }
 
-    return spaces.map((space, index) => (
+    const filteredSpaces = spaces.filter((space) =>
+        space.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    return filteredSpaces.map((space, index) => (
         <div
             key={`${space.name}-${index}`}
             className="space-card"

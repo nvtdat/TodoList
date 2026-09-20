@@ -46,6 +46,7 @@ function SpaceView() {
     const [tasks, setTasks] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [spaceSearchQuery, setSpaceSearchQuery] = useState('');
 
     useEffect(() => {
         async function loadSpace() {
@@ -135,7 +136,11 @@ function SpaceView() {
                 </div>
                 <div className="sidebar-content">
                     <div className="sidebar-search">
-                        <input type="text" placeholder="Search..." className="sidebar-search-input" />
+                        <input 
+                            type="text" placeholder="Space..." 
+                            value={spaceSearchQuery}
+                            onChange={(e) => setSpaceSearchQuery(e.target.value)}
+                            className="sidebar-search-input" />
                         <button className="sidebar-search-button" type="button" aria-label="Search">
                             <img src={Search} alt="" style={{ width: "18px", height: "18px" }} />
                         </button>
@@ -184,7 +189,7 @@ function SpaceView() {
                 <div className="space-list">
                     <Typography className="space-header">My Space</Typography>
                     {/*Render space list*/}
-                    <SpaceList />
+                    <SpaceList searchQuery={spaceSearchQuery}/>
                 </div>
 
                 <div className="sidebar-footer">
