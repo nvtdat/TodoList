@@ -60,6 +60,26 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class UserRegistrationResponse(UserResponse):
+    """Kèm trạng thái gửi thư xác minh để frontend báo đúng cho người dùng.
+
+    Tài khoản được tạo trước khi thư được gửi. Nếu việc gửi thất bại thì đó là
+    sự cố cấu hình chứ không phải lỗi đăng ký, nên phải trả về thông tin để
+    frontend hiển thị nút gửi lại thay vì báo lỗi chung chung.
+    """
+
+    verification_email_sent: bool = Field(..., example=True)
+    verification_email_error: str | None = Field(default=None, example=None)
+
+class EmailDispatchResponse(BaseModel):
+    message: str
+    email_sent: bool
+    transport: str
+    error: str | None = Field(default=None)
+
+class MessageResponse(BaseModel):
+    message: str
+
 class UserLogin(BaseModel):
     email: str = Field(..., example="Email")
     password: str = Field(..., example="Password")
