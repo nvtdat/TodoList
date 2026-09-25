@@ -1,16 +1,3 @@
-"""Xác thực Google access token cho luồng đăng nhập bằng Google.
-
-Frontend gọi useGoogleLogin() của @react-oauth/google; hook này dùng luồng
-OAuth 2.0 Token nên trả về một *access token* dạng chuỗi opaque
-(ví dụ "ya29.a0..."), không phải ID token dạng JWT. Vì vậy không thể xác thực
-bằng google.oauth2.id_token.verify_oauth2_token() - hàm đó sẽ ném
-ValueError "Wrong number of segments in token".
-
-Thay vào đó module này hỏi thẳng Google:
-  - tokeninfo: xác nhận token còn hạn và được cấp cho đúng client của mình (aud).
-  - userinfo: lấy email, tên và mã định danh Google của người dùng.
-"""
-
 import os
 from dataclasses import dataclass
 
@@ -27,7 +14,7 @@ GOOGLE_REQUEST_TIMEOUT_SECONDS = 10
 
 @dataclass(frozen=True)
 class GoogleAccount:
-    """Tài khoản Google đã được xác thực."""
+    #Tài khoản Google xác thực thành công, dùng để đăng nhập hoặc đăng ký người dùng.
 
     email: str
     name: str
@@ -39,7 +26,7 @@ def _expected_client_id() -> str:
     if not client_id:
         raise HTTPException(
             status_code=500,
-            detail="Máy chủ chưa cấu hình GOOGLE_CLIENT_ID",
+            detail=" GOOGLE_CLIENT_ID",
         )
     return client_id
 
@@ -50,34 +37,29 @@ def _google_get(url: str, **kwargs) -> requests.Response:
     except requests.RequestException:
         raise HTTPException(
             status_code=503,
-            detail="Không kết nối được tới Google, vui lòng thử lại sau",
+            detail="Unable to reach Google servers for token verification",
         )
 
 
 def _ensure_token_belongs_to_app(access_token: str) -> None:
-    """Token phải còn hạn và được cấp cho đúng client ID của ứng dụng.
-
-    Đây là phần thay thế cho việc kiểm tra trường "aud" khi verify ID token:
-    nếu thiếu bước này, một access token của ứng dụng khác vẫn có thể dùng để
-    đăng nhập vào hệ thống.
-    """
+   # Xác thực access token với Google tokeninfo và đảm bảo nó thuộc về ứng dụng của chúng ta.
     response = _google_get(GOOGLE_TOKENINFO_URL, params={"access_token": access_token})
     if response.status_code != 200:
         raise HTTPException(
             status_code=401,
-            detail="Google token không hợp lệ hoặc đã hết hạn",
+            detail="Invalid or expired Google token",
         )
 
     token_info = response.json()
     if token_info.get("aud") != _expected_client_id():
         raise HTTPException(
             status_code=401,
-            detail="Google token không được cấp cho ứng dụng này",
+            detail="Google token is not issued for this app",
         )
     if str(token_info.get("email_verified", "")).lower() != "true":
         raise HTTPException(
             status_code=401,
-            detail="Email Google chưa được xác minh",
+            detail="Unverified Google account (email not verified)",
         )
 
 
@@ -89,7 +71,7 @@ def _fetch_profile(access_token: str) -> dict:
     if response.status_code != 200:
         raise HTTPException(
             status_code=401,
-            detail="Không lấy được thông tin tài khoản Google",
+            detail="Unable to fetch Google account information",
         )
     return response.json()
 
@@ -106,14 +88,14 @@ def fetch_google_account(access_token: str) -> GoogleAccount:
     if not email:
         raise HTTPException(
             status_code=401,
-            detail="Tài khoản Google không có email",
+            detail="Google account does not have an email address",
         )
 
     google_id = profile.get("sub")
     if not google_id:
         raise HTTPException(
             status_code=401,
-            detail="Tài khoản Google không có mã định danh",
+            detail="Google account does not have a unique identifier",
         )
 
     name = profile.get("name") or email.split("@")[0]
