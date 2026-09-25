@@ -75,7 +75,53 @@ npm install
 npm run dev
 ```
 
-Cần tạo file `.env` ở cả hai thư mục với các biến môi trường tương ứng (database, JWT secret, Google Client ID, cấu hình email...).
+### Chạy toàn bộ ứng dụng bằng Docker Compose
+
+```bash
+cp .env.example .env
+# Mở .env và thay DATABASE_URL, SECRET_KEY, VITE_GOOGLE_CLIENT_ID...
+docker compose up --build -d
+```
+
+Sau đó mở `http://localhost:5173`. Backend chạy tại `http://localhost:8000`.
+
+Không commit file `.env` vì file này chứa secret. Khi triển khai lên máy chủ khác,
+chỉ cần copy `.env.example` thành `.env`, điền các giá trị riêng của máy chủ đó,
+rồi chạy lại `docker compose up --build -d`.
+
+### Build image tự động trên GitHub
+
+Workflow `.github/workflows/docker-build.yml` tự động build và push image lên
+GHCR mỗi khi có push vào nhánh `main`:
+
+- `ghcr.io/<owner>/todolist-backend:latest`
+- `ghcr.io/<owner>/todolist-frontend:latest`
+
+Trong GitHub Repository Settings -> Secrets and variables -> Actions -> Variables,
+khai báo `VITE_API_URL` và `VITE_GOOGLE_CLIENT_ID`. Đây là các biến frontend
+được nhúng lúc build. Không đưa `DATABASE_URL` hoặc `SECRET_KEY` vào build args;
+hãy khai báo chúng ở môi trường chạy container (Render, Railway, VPS hoặc Docker
+Compose), vì đó là thông tin bí mật và không thể dùng chung trong image công khai.
+
+Đối với backend, vào GitHub Repository Settings -> Secrets and variables ->
+Actions -> Secrets và tạo:
+
+- `DATABASE_URL`: chuỗi kết nối MySQL hoặc PostgreSQL
+- `SECRET_KEY`: chuỗi ngẫu nhiên dùng để ký JWT
+
+Hai secret này không được nhúng vào image. Khi chạy image trên máy chủ, hãy cấu
+hình cùng tên biến tại phần Environment Variables của máy chủ, hoặc truyền trực
+tiếp cho Docker:
+
+```bash
+docker run -d --name todolist-backend -p 8000:8000 \
+	-e DATABASE_URL="$DATABASE_URL" \
+	-e SECRET_KEY="$SECRET_KEY" \
+	ghcr.io/<owner>/todolist-backend:latest
+```
+
+GitHub Actions chỉ build và đẩy image lên GHCR; GitHub Secret không tự động đi
+theo image đến máy chủ. Đây là chủ ý để không làm lộ thông tin database và JWT.
 
 ## Tác giả
 Nguyễn Văn Tiến Đạt.
